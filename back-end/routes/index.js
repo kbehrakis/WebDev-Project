@@ -4,8 +4,9 @@ var router = express.Router();
 var nodemailer = require('nodemailer');
 const creds = require('../config/config');
 
-//********** ADDING CALENDAR DATA TO DATABASE **********
-// Overall idea: CSV data -> JSON -> database
+//********** START ADDING OLIN CALENDAR DATA TO DATABASE **********
+// Goal: Extract the calendar events from the csv and add them to a mongo database
+// Approach: CSV data -> JSON -> database
 // https://www.npmjs.com/package/csvtojson
 const csvFilePath='./csv/2018-2019.csv'
 const csv = require('csvtojson')
@@ -49,9 +50,41 @@ csv().fromFile(csvFilePath).then((jsonObj)=>{
   ]
 */
 
+//********** END ADDING CALENDAR DATA TO DATABASE **********
+
+
+
+//********** START ADDING COURSE DATA TO DATABASE **********
+// Goal: Extract the course data from the csv and add them to a mongo database
+// Approach: CSV data -> JSON -> database
+// https://www.npmjs.com/package/csvtojson
+const coursesFilePath='./csv/2019courses.csv'
+
+// Convert the csv file to a json object, then add jsonObj to database
+csv().fromFile(coursesFilePath).then((jsonObj)=>{
+  // Establish the connection
+  MongoClient.connect(url, function(err, db) {
+    // Error catching
+    if (err) throw err;
+
+    // database name is mydb, collection is events
+    var dbo = db.db("mydb");
+    var myobj = jsonObj;
+
+    dbo.collection("courses").insertMany(myobj, function(err, res) {
+      if (err) throw err;
+      console.log("Number of documents inserted: " + res.insertedCount);
+      db.close();
+    });
+  });
+})
+//********** END ADDING COURSE DATA TO DATABASE **********
+
+
 
 
 // ******************** START ICAL SETUP *******************/
+// Goal: Create iCals for different events
 // https://nodemailer.com/message/calendar-events/
 // https://www.npmjs.com/package/ical-generator
 const ical = require('ical-generator');
@@ -72,13 +105,13 @@ const event = cal.createEvent({summary: 'My Event'});
     location: 'my room',
 });
 */
-
 // ******************** END ICAL SETUP *******************/
 
 
 
 
-// ******************** EMAIL SETUP **********************/
+// ******************** START EMAIL SETUP **********************/
+// Goal: Send iCals via email
 // Use the smtp protocol and gmail b/c that's our email provider
 // https://nodemailer.com/smtp/
 var smtpConfig = {
@@ -133,5 +166,84 @@ router.post('/send', (req, res, next) => {
     }
   })
 })
+// ******************** END EMAIL SETUP **********************/
+
+
+
+// semesterInfo should be contain info on the start date, end date, and unusual dates during the semesterInfo
+// Unusual dates are Olin Mondays or days off.  This info should be extracted from the course calendar
+allMeetingTimesInSemester(/*semesterInfo*/)
+// ******************** HELPER FUNCTIONS **********************/
+// Creates a JSON object containing dates for all the Mondays, Tuesdays, etc.
+// Takes into account the Olin Mondays and days off
+/* Of the form:
+    [
+        {day: 'Monday', allDates: ['February 4, 2019',
+                                   'February 11, 2019',
+                                   ....]},
+        {day: 'Tuesday', allDates: ['February 5, 2019',
+                                    'February 12, 2019',
+                                   ....]},
+        ....
+    ]
+*/
+function allMeetingTimesInSemester(/*semesterInfo*/) {
+  // This will keep track of the days.  0 is Sunday, 1 is Monday, etc.
+  var counter = 1
+
+  var jsonObject = [{"day":"Monday", "allDates":[]},
+                    {"day":"Tuesday", "allDates":[]},
+                    {"day":"Wednesday", "allDates":[]},
+                    {"day":"Thursday", "allDates":[]},
+                    {"day":"Friday", "allDates":[]}]
+
+  // For each day of the week, add it to the JSON object
+  jsonObject.forEach(function(weekday) {
+    // ** Will want to extract these from semesterInfo instead of hardcoding
+    startDate = "2019-01-23"
+    endDate = "2019-05-03"
+    olinMondays = ["2019-02-20", "2019-04-11"]
+    noClasses = ["2019-02-18","2019-03-07", "2019-03-18", "2019-03-19", "2019-03-20","2019-03-21","2019-03-22", "2019-04-15"]
+
+    weekday.allDates = getListOfDates(counter, startDate, endDate, olinMondays, noClasses)
+
+    // Move ahead one day
+    counter = counter + 1
+  });
+
+  console.log(jsonObject);
+  return jsonObject;
+};
+
+// Get the list of the dates excluding olin mondays and days off
+function getListOfDates(day, startDate, endDate, olinMondays, noClasses){
+  var result = [];
+  var current = moment(startDate);
+
+  // While we haven't reached the end date, keep adding days
+  while (current.day(day).isSameOrBefore(endDate)) {
+    var formattedDate = current.format('YYYY-MM-DD');
+    var isUnusualDate = olinMondays.includes(formattedDate) || noClasses.includes(formattedDate)
+
+    // If the day we're adding is a day with no classes or an Olin monday, then we will not add it to the meeting times for this day
+    if(!isUnusualDate){
+      if(current.day(day).isSameOrAfter(startDate)){
+        result.push(formattedDate);
+      }
+    }
+
+    // Skip forward 1 week to get the next date
+    current.day(7)
+  }
+
+  // Add all the Olin Mondays to the Monday class meetings (monday corresponds to day 1)
+  if(day == 1){
+    olinMondays.forEach(function(olinMondayDate) {
+      result.push(olinMondayDate)
+    })
+  }
+
+  return result
+}
 
 module.exports = router;
