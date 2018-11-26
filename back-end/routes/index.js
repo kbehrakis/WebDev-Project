@@ -96,8 +96,56 @@ MongoClient.connect(url, function(err, db) {
   });
   */
   // ******************** END ICAL SETUP *******************/
-
-
+    var events = []
+    var date = "TW 9.40-4.50pm";
+    spacePos = date.search(" ");
+    days = date.slice(0,spacePos);
+     var x = new Object();
+    x["T"] = "tu";
+    x["M"] = "mo";
+    x["W"] = "we";
+    x["R"] = "th";
+    x["F"] = "fr";
+     i = 0;
+    var repeatDays = [];
+    while (i<days.length)
+    {
+        day = days.charAt(i);
+        repeatDays.push(x[day]);
+        i = i + 1;
+    }
+     endPos = date.search(";");
+    if (endPos == -1)
+    {
+        endPos = date.length;
+    }
+     time = date.slice(spacePos+1,endPos);
+     hyphenPos = time.search("-");
+    startTime = time.slice(0,hyphenPos);
+    startHour =  startTime.slice(0,startTime.search(/\./));
+    startMinutes = startTime.slice(startTime.search(/\./)+1,startTime.length);
+     endTime = time.slice(hyphenPos+1,time.length);
+    endHour =  endTime.slice(0,endTime.search(/\./));
+    endMinutes = endTime.slice(endTime.search(/\./)+1,endTime.length-2);
+     if (endTime.search("pm") != -1 && endHour<12){
+            if (endHour > startHour)
+            {
+            startHour = String(parseInt(startHour)+12)
+            }
+            if (endHour == startHour && endHour != 12)
+            {
+             startHour = String(parseInt(startHour)+12)
+            }
+            endHour = String(parseInt(endHour)+12)
+    }
+     startTime = startHour+startMinutes
+    endTime = endHour+endMinutes
+     var eventToAdd = new Object();
+    eventToAdd.days = repeatDays;
+    eventToAdd.startTime = startTime;
+    eventToAdd.endTime = endTime;
+     console.log(eventToAdd);
+     events.push(event)
 
 
   // ******************** START EMAIL SETUP **********************/
