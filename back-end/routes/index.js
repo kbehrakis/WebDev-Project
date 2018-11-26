@@ -81,7 +81,7 @@ csv().fromFile(coursesFilePath).then((jsonObj)=>{
 //********** END ADDING COURSE DATA TO DATABASE **********
 
 
-var events = []
+
 
 // ******************** START ICAL SETUP *******************/
 // Goal: Create iCals for different events
@@ -170,6 +170,7 @@ eventToAdd.endTime = endTime;
 console.log(eventToAdd);
 
 events.push(event)
+
 
 // ******************** START EMAIL SETUP **********************/
 // Goal: Send iCals via email
