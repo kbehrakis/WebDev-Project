@@ -73,6 +73,27 @@ MongoClient.connect(url, function(err, db) {
 
 
 
+    var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
+    var semesterInfo = getSemesterInfo()
+
+    // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
+    var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
+    var mondayExclusions = excludedDaysANDfirstDates[0].allDates;
+    var tuesdayExclusions = excludedDaysANDfirstDates[1].allDates;
+    var wednesdayExclusions = excludedDaysANDfirstDates[2].allDates;
+    var thursdayExclusions = excludedDaysANDfirstDates[3].allDates;
+    var fridayExclusions = excludedDaysANDfirstDates[4].allDates;
+
+    // Sets up the variables that store the first dates of each day of the week
+    var firstMonday = excludedDaysANDfirstDates[0].firstDate;
+    var firstTuesday = excludedDaysANDfirstDates[1].firstDate;
+    var firstWednesday = excludedDaysANDfirstDates[2].firstDate;
+    var firstThursday = excludedDaysANDfirstDates[3].firstDate;
+    var firstFriday = excludedDaysANDfirstDates[4].firstDate;
+
+    // CHANGE TO: const endDate = semesterInfo[1];
+    var endDate = new Date('May 03 2019 00:00:00 UTC')
+
 
   // ******************** START ICAL SETUP *******************/
   // Goal: Create iCals for different events
@@ -83,10 +104,23 @@ MongoClient.connect(url, function(err, db) {
   //const cal = ical({domain: 'github.com', name: 'my first iCal'});
 
   function icalGen(eventToAdd){
-
         const cal = ical();
-        // overwrite domain
-        //cal.domain('localhost:3000');
+
+        // Get the day of the week so that we know which weekdays we need to exlude
+        var excludedDates = []
+        switch(eventToAdd.weekday){
+          case "mo": excludedDates = mondayExclusions
+          break;
+          case "tu": excludedDates = tuesdayExclusions
+          break;
+          case "we": excludedDates = wednesdayExclusions
+          break;
+          case "th": excludedDates = thursdayExclusions
+          break;
+          case "fr": excludedDates = fridayExclusions
+          break;
+        }
+        console.log("HERE: " +excludedDates.toString())
 
         const event = cal.createEvent({
             start: eventToAdd.start,
@@ -96,14 +130,12 @@ MongoClient.connect(url, function(err, db) {
             location: 'my room',
             repeating: {
               freq: 'WEEKLY',
-              until: new Date('Jan 01 2020 00:00:00 UTC'),
-              exclude: [new Date('Mar 04 2019 00:00:00 UTC')],
+              until: endDate,
+              exclude: excludedDates,
               byDay: eventToAdd.days,
               }
         });
-
         return cal
-
   }
 
   // ******************** END ICAL SETUP *******************/
@@ -113,7 +145,6 @@ MongoClient.connect(url, function(err, db) {
   // Goal: Send iCals via email
   // Use the smtp protocol and gmail b/c that's our email provider
   // https://nodemailer.com/smtp/
-
   var smtpConfig = {
     host: 'smtp.gmail.com',
     auth: {
@@ -121,12 +152,9 @@ MongoClient.connect(url, function(err, db) {
       pass: creds.PASS
     }
   }
-  var reqClasses = ["SUST3301: Sustainability Synthesis"];
-
 
   // Create the transport from the smtp configuration
   var transporter = nodemailer.createTransport(smtpConfig)
-  //convert(extractClasses(reqClasses))
 
   // Verify ensures that the transported was created effectively such that the server is ready
   transporter.verify((error, success) => {
@@ -136,20 +164,12 @@ MongoClient.connect(url, function(err, db) {
       console.log('Server is ready for our messages');
     }
   });
-
-
-
-
   // ******************** END EMAIL SETUP **********************/
-
-
-
 
 
 
   // Need to do a timeout because we need to wait until the info has been fully added to the database
   setTimeout(function(){
-
     router.post('/send', (req, res, next) => {
        console.log("jksdj")
        extractClasses(reqClasses,convert,res,req)
@@ -157,21 +177,14 @@ MongoClient.connect(url, function(err, db) {
      })
 
 
-
-      var semesterInfo = getSemesterInfo()
-
-    //extractClasses(reqClasses,convert)
-
-    function sendmail(attachments,res,req){
-
-
+  function sendmail(attachments,res,req){
      var mail = {
       from:  req.body.name,           // Name of the recipient
       to: req.body.email,            // Email we want to send the message to
-      subject: 'iCals for the 2019 semester at Olin',
+      subject: 'iCals for the 2019 Semester',
       text: "Hi! Thanks for using the Olin iCalMaker.  Attached are the iCals you requested.",
       attachments: attachments}
-    // https://nodemailer.com/transports/sendmail/
+
     // https://nodemailer.com/transports/sendmail/
     transporter.sendMail(mail, (err, data) => {
     if (err) {
@@ -184,54 +197,35 @@ MongoClient.connect(url, function(err, db) {
         })
       }
     })
-
-
-}
-      // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
-      var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
-      var mondayExclusions = excludedDaysANDfirstDates[0].allDates;
-
-      //Sets up the variables that store the first dates of each day of the week
-      var firstMonday = excludedDaysANDfirstDates[0].firstDate;
-      var firstTuesday = excludedDaysANDfirstDates[1].firstDate;
-      var firstWednesday = excludedDaysANDfirstDates[2].firstDate;
-      var firstThursday = excludedDaysANDfirstDates[3].firstDate;
-      var firstFriday = excludedDaysANDfirstDates[4].firstDate;
+  }
 
     function extractClasses(reqClasses,convert,res,req){
          var iCalEvents = []
 
-
-
-       for(var i = 0; i<reqClasses.length;i++){
-
-                 dbo.collection("courses").find({"Course Title" : "SUST3301: Sustainability Synthesis"}).toArray(function(err, result) {
+         for(var i = 0; i<reqClasses.length;i++){
+                 dbo.collection("courses").find({"Course Title" : "SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"}).toArray(function(err, result) {
                     if (err) throw err;
-
                       var eventToAdd = new Object()
-
-
                       startTime = formatTime(result[0].Time)[0]
                       endTime = formatTime(result[0].Time)[1]
                       repeatDays = findRepeatDays(result[0].Time)
-                      startDate = formatSartDate(repeatDays[0])
+                      startDate = formatStartDate(repeatDays[0])
 
+                      eventToAdd.weekday = repeatDays[0];
                       eventToAdd.days = repeatDays;
                       eventToAdd.start = startDate+startTime;
                       eventToAdd.end = startDate+endTime;
 
-                       iCalEvents.push(icalGen(eventToAdd).toString())
+                      iCalEvents.push(icalGen(eventToAdd).toString())
 
                    });
         }
-
         setTimeout(function(){return convert(iCalEvents,res,req)},2000)
-
     }
 
 
     function convert(iCalEvents,res,req){
- var attachments = []
+        var attachments = []
         for(var i = 0; i<iCalEvents.length;i++)
         {
             var attachment = new Object()
@@ -242,14 +236,12 @@ MongoClient.connect(url, function(err, db) {
 
             attachments.push(attachment)
         }
-          console.log(attachments)
-      sendmail(attachments,res,req)
-    return attachments
-
+        console.log(attachments)
+        sendmail(attachments,res,req)
+       return attachments
     }
 
-    function formatSartDate(firstDay){
-
+    function formatStartDate(firstDay){
         if (firstDay == "mo"){
             return firstMonday.replace(/-/g, "")
           }
@@ -268,7 +260,6 @@ MongoClient.connect(url, function(err, db) {
 
         if (firstDay == "fr"){
             return firstFriday.replace(/-/g, "");}
-
     }
 
     function findRepeatDays(date){
