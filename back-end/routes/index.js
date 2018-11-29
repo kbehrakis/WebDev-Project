@@ -81,9 +81,9 @@ MongoClient.connect(url, function(err, db) {
   const ical = require('ical-generator');
   const http = require('http');
   //const cal = ical({domain: 'github.com', name: 'my first iCal'});
-  
+
   function icalGen(eventToAdd){
-  
+
         const cal = ical();
         // overwrite domain
         //cal.domain('localhost:3000');
@@ -97,6 +97,7 @@ MongoClient.connect(url, function(err, db) {
             repeating: {
               freq: 'WEEKLY',
               until: new Date('Jan 01 2020 00:00:00 UTC'),
+              exclude: [new Date('Mar 04 2019 00:00:00 UTC')],
               byDay: eventToAdd.days,
               }
         });
@@ -104,7 +105,7 @@ MongoClient.connect(url, function(err, db) {
         return cal
 
   }
-  
+
   // ******************** END ICAL SETUP *******************/
 
 
@@ -125,24 +126,7 @@ MongoClient.connect(url, function(err, db) {
 
   // Create the transport from the smtp configuration
   var transporter = nodemailer.createTransport(smtpConfig)
-
-router.post('/send', (req, res, next) => {
-   console.log("jksdj")
-   convert(extractClasses(reqClasses))
-    
-    // https://nodemailer.com/transports/sendmail/
-    /*transporter.sendMail(mail, (err, data) => {
-      if (err) {
-        res.json({
-          msg: 'fail'
-        })
-      } else {
-        res.json({
-          msg: 'success'
-        })
-      }
-    })*/
-  })
+  //convert(extractClasses(reqClasses))
 
   // Verify ensures that the transported was created effectively such that the server is ready
   transporter.verify((error, success) => {
@@ -153,12 +137,12 @@ router.post('/send', (req, res, next) => {
     }
   });
 
-  
+
 
 
   // ******************** END EMAIL SETUP **********************/
 
-  
+
 
 
 
@@ -166,27 +150,42 @@ router.post('/send', (req, res, next) => {
   // Need to do a timeout because we need to wait until the info has been fully added to the database
   setTimeout(function(){
 
+    router.post('/send', (req, res, next) => {
+       console.log("jksdj")
+       extractClasses(reqClasses,convert,res,req)
 
-    
+     })
+
+
 
       var semesterInfo = getSemesterInfo()
 
     //extractClasses(reqClasses,convert)
 
-    function sendmail(attachments){
+    function sendmail(attachments,res,req){
 
-  
+
      var mail = {
-      from: "Athmika",           // Name of the recipient
-      to: "kbehrakis@olin.edu",            // Email we want to send the message to
-      subject: 'iCals for the 2019 Semester at Olin',
-      text: "email",
-      attachments: attachments
+      from:  req.body.name,           // Name of the recipient
+      to: req.body.email,            // Email we want to send the message to
+      subject: 'iCals for the 2019 semester at Olin',
+      text: "Hi! Thanks for using the Olin iCalMaker.  Attached are the iCals you requested.",
+      attachments: attachments}
     // https://nodemailer.com/transports/sendmail/
-  }
- transporter.sendMail(mail, (err, data) => {
-     
+    // https://nodemailer.com/transports/sendmail/
+    transporter.sendMail(mail, (err, data) => {
+    if (err) {
+        res.json({
+          msg: 'fail'
+        })
+      } else {
+        res.json({
+          msg: 'success'
+        })
+      }
     })
+
+
 }
       // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
       var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
@@ -199,16 +198,16 @@ router.post('/send', (req, res, next) => {
       var firstThursday = excludedDaysANDfirstDates[3].firstDate;
       var firstFriday = excludedDaysANDfirstDates[4].firstDate;
 
-    function extractClasses(reqClasses,convert){
+    function extractClasses(reqClasses,convert,res,req){
          var iCalEvents = []
 
 
-        
+
        for(var i = 0; i<reqClasses.length;i++){
-              
+
                  dbo.collection("courses").find({"Course Title" : "SUST3301: Sustainability Synthesis"}).toArray(function(err, result) {
                     if (err) throw err;
-                      
+
                       var eventToAdd = new Object()
 
 
@@ -226,12 +225,12 @@ router.post('/send', (req, res, next) => {
                    });
         }
 
-        setTimeout(function(){return convert(iCalEvents)},2000)
-       
+        setTimeout(function(){return convert(iCalEvents,res,req)},2000)
+
     }
 
 
-    function convert(iCalEvents){
+    function convert(iCalEvents,res,req){
  var attachments = []
         for(var i = 0; i<iCalEvents.length;i++)
         {
@@ -240,11 +239,11 @@ router.post('/send', (req, res, next) => {
             attachment.filename = "class.ics"
             attachment.method = "request"
             attachment.content = iCalEvents[i]
-    
+
             attachments.push(attachment)
         }
-          console.log(attachments)  
-      sendmail(attachments)
+          console.log(attachments)
+      sendmail(attachments,res,req)
     return attachments
 
     }
@@ -273,7 +272,7 @@ router.post('/send', (req, res, next) => {
     }
 
     function findRepeatDays(date){
-    
+
     var dict = new Object();
     dict["T"] = "tu";
     dict["M"] = "mo";
@@ -301,7 +300,7 @@ router.post('/send', (req, res, next) => {
 
         spacePos = date.search(" ");
         days = date.slice(0,spacePos);
-        
+
         endPos = date.search(";");
         if (endPos == -1)
         {
@@ -310,15 +309,15 @@ router.post('/send', (req, res, next) => {
 
          time = date.slice(spacePos+1,endPos);
          hyphenPos = time.search("-");
-         
+
          startTime = time.slice(0,hyphenPos);
          startHour =  startTime.slice(0,startTime.search(/\:/));
          startMinutes = startTime.slice(startTime.search(/\:/)+1,startTime.length);
-         
+
          endTime = time.slice(hyphenPos+1,time.length);
          endHour =  endTime.slice(0,endTime.search(/\:/));
          endMinutes = endTime.slice(endTime.search(/\:/)+1,endTime.length-2);
-        
+
          if (endTime.search("pm") != -1 && endHour<12){
                 if (endHour > startHour)
                 {
@@ -330,14 +329,14 @@ router.post('/send', (req, res, next) => {
                 }
                 endHour = String(parseInt(endHour)+12)
         }
-        
+
         startTime = "T"+startHour+startMinutes+"00"
         endTime = "T"+endHour+endMinutes+"00"
 
         return[startTime,endTime]
 
   }
-     
+
 
   }, 2000);
 
@@ -347,7 +346,7 @@ router.post('/send', (req, res, next) => {
   // Get the necessary semester information from the database
   // Returns a vector in the following format: [startDate, endDate, [olinMondays], [noClasses]]
 
-  
+
   function getSemesterInfo(){
     var startDate = null
     // Populate the startDate variable using databse info
@@ -411,7 +410,7 @@ router.post('/send', (req, res, next) => {
           ....
       ]*/
 
-  
+
   function getExludedDatesANDfirstDates(semesterInfo) {
     /**** THESE NEED TO BE PARSED CORRECTLY SO WE CAN USE THEM ****/
     //const startDate = semesterInfo[0];

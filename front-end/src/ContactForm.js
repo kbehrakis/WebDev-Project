@@ -8,7 +8,7 @@ class ContactForm extends Component{
         //Extract the name and email that were entered
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
-        console.log("sdsd")
+        
         // https://alligator.io/react/axios-react/
         axios({
             method: "POST",
