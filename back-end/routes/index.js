@@ -81,77 +81,38 @@ MongoClient.connect(url, function(err, db) {
   const ical = require('ical-generator');
   const http = require('http');
   //const cal = ical({domain: 'github.com', name: 'my first iCal'});
-  const cal = ical();
+  
+  function icalGen(eventToAdd){
+  
+        const cal = ical();
+        // overwrite domain
+        //cal.domain('localhost:3000');
 
-  // overwrite domain
-  //cal.domain('localhost:3000');
+        const event = cal.createEvent({
+            start: eventToAdd.start,
+            end: eventToAdd.end,
+            summary: 'Example Event',
+            description: 'It works ;)',
+            location: 'my room',
+            repeating: {
+              freq: 'WEEKLY',
+              until: new Date('Jan 01 2020 00:00:00 UTC'),
+              byDay: eventToAdd.days,
+              }
+        });
 
-  const event = cal.createEvent({summary: 'My Event'});
-  /*const event = cal.createEvent({
-      start: moment(),
-      end: moment().add(1, 'hour'),
-      summary: 'Example Event',
-      description: 'It works ;)',
-      location: 'my room',
-  });
-  */
+        return cal
+
+  }
+  
   // ******************** END ICAL SETUP *******************/
-    var events = []
-    var date = "TW 9.40-4.50pm";
-    spacePos = date.search(" ");
-    days = date.slice(0,spacePos);
-     var x = new Object();
-    x["T"] = "tu";
-    x["M"] = "mo";
-    x["W"] = "we";
-    x["R"] = "th";
-    x["F"] = "fr";
-     i = 0;
-    var repeatDays = [];
-    while (i<days.length)
-    {
-        day = days.charAt(i);
-        repeatDays.push(x[day]);
-        i = i + 1;
-    }
-     endPos = date.search(";");
-    if (endPos == -1)
-    {
-        endPos = date.length;
-    }
-     time = date.slice(spacePos+1,endPos);
-     hyphenPos = time.search("-");
-    startTime = time.slice(0,hyphenPos);
-    startHour =  startTime.slice(0,startTime.search(/\./));
-    startMinutes = startTime.slice(startTime.search(/\./)+1,startTime.length);
-     endTime = time.slice(hyphenPos+1,time.length);
-    endHour =  endTime.slice(0,endTime.search(/\./));
-    endMinutes = endTime.slice(endTime.search(/\./)+1,endTime.length-2);
-     if (endTime.search("pm") != -1 && endHour<12){
-            if (endHour > startHour)
-            {
-            startHour = String(parseInt(startHour)+12)
-            }
-            if (endHour == startHour && endHour != 12)
-            {
-             startHour = String(parseInt(startHour)+12)
-            }
-            endHour = String(parseInt(endHour)+12)
-    }
-     startTime = startHour+startMinutes
-    endTime = endHour+endMinutes
-     var eventToAdd = new Object();
-    eventToAdd.days = repeatDays;
-    eventToAdd.startTime = startTime;
-    eventToAdd.endTime = endTime;
-     console.log(eventToAdd);
-     events.push(event)
 
 
   // ******************** START EMAIL SETUP **********************/
   // Goal: Send iCals via email
   // Use the smtp protocol and gmail b/c that's our email provider
   // https://nodemailer.com/smtp/
+
   var smtpConfig = {
     host: 'smtp.gmail.com',
     auth: {
@@ -159,9 +120,29 @@ MongoClient.connect(url, function(err, db) {
       pass: creds.PASS
     }
   }
+  var reqClasses = ["SUST3301: Sustainability Synthesis"];
+
 
   // Create the transport from the smtp configuration
   var transporter = nodemailer.createTransport(smtpConfig)
+
+router.post('/send', (req, res, next) => {
+   console.log("jksdj")
+   convert(extractClasses(reqClasses))
+    
+    // https://nodemailer.com/transports/sendmail/
+    /*transporter.sendMail(mail, (err, data) => {
+      if (err) {
+        res.json({
+          msg: 'fail'
+        })
+      } else {
+        res.json({
+          msg: 'success'
+        })
+      }
+    })*/
+  })
 
   // Verify ensures that the transported was created effectively such that the server is ready
   transporter.verify((error, success) => {
@@ -172,64 +153,201 @@ MongoClient.connect(url, function(err, db) {
     }
   });
 
-  router.post('/send', (req, res, next) => {
-    var name = req.body.name
-    var email = req.body.email
-    var message = req.body.message
-    var content = 'Hi! \nAttached are your iCals for the upcoming semester!'
+  
 
-    // Encpsulate all of the email data to then send via the transported
-    var mail = {
-      from: name,           // Name of the recipient
-      to: email,            // Email we want to send the message to
-      subject: 'iCals for the 2019 Semester at Olin',
-      text: content,
-      icalEvent: {
-          filename: 'invitation.ics',
-          method: 'request',
-          content: cal.toString()
-      }
-    }
 
-    // https://nodemailer.com/transports/sendmail/
-    transporter.sendMail(mail, (err, data) => {
-      if (err) {
-        res.json({
-          msg: 'fail'
-        })
-      } else {
-        res.json({
-          msg: 'success'
-        })
-      }
-    })
-  })
   // ******************** END EMAIL SETUP **********************/
 
+  
 
 
 
 
   // Need to do a timeout because we need to wait until the info has been fully added to the database
   setTimeout(function(){
+
+
+    
+
       var semesterInfo = getSemesterInfo()
 
+    //extractClasses(reqClasses,convert)
+
+    function sendmail(attachments){
+
+  
+     var mail = {
+      from: "Athmika",           // Name of the recipient
+      to: "kbehrakis@olin.edu",            // Email we want to send the message to
+      subject: 'iCals for the 2019 Semester at Olin',
+      text: "email",
+      attachments: attachments
+    // https://nodemailer.com/transports/sendmail/
+  }
+ transporter.sendMail(mail, (err, data) => {
+     
+    })
+}
       // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
-      var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo)
-      var mondayExclusions = excludedDaysANDfirstDates[0].allDates
-      var firstMonday = excludedDaysANDfirstDates[0].firstDate
+      var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
+      var mondayExclusions = excludedDaysANDfirstDates[0].allDates;
 
-      console.log(mondayExclusions)
-      console.log(firstMonday)
+      //Sets up the variables that store the first dates of each day of the week
+      var firstMonday = excludedDaysANDfirstDates[0].firstDate;
+      var firstTuesday = excludedDaysANDfirstDates[1].firstDate;
+      var firstWednesday = excludedDaysANDfirstDates[2].firstDate;
+      var firstThursday = excludedDaysANDfirstDates[3].firstDate;
+      var firstFriday = excludedDaysANDfirstDates[4].firstDate;
+
+    function extractClasses(reqClasses,convert){
+         var iCalEvents = []
+
+
+        
+       for(var i = 0; i<reqClasses.length;i++){
+              
+                 dbo.collection("courses").find({"Course Title" : "SUST3301: Sustainability Synthesis"}).toArray(function(err, result) {
+                    if (err) throw err;
+                      
+                      var eventToAdd = new Object()
+
+
+                      startTime = formatTime(result[0].Time)[0]
+                      endTime = formatTime(result[0].Time)[1]
+                      repeatDays = findRepeatDays(result[0].Time)
+                      startDate = formatSartDate(repeatDays[0])
+
+                      eventToAdd.days = repeatDays;
+                      eventToAdd.start = startDate+startTime;
+                      eventToAdd.end = startDate+endTime;
+
+                       iCalEvents.push(icalGen(eventToAdd).toString())
+
+                   });
+        }
+
+        setTimeout(function(){return convert(iCalEvents)},2000)
+       
+    }
+
+
+    function convert(iCalEvents){
+ var attachments = []
+        for(var i = 0; i<iCalEvents.length;i++)
+        {
+            var attachment = new Object()
+
+            attachment.filename = "class.ics"
+            attachment.method = "request"
+            attachment.content = iCalEvents[i]
+    
+            attachments.push(attachment)
+        }
+          console.log(attachments)  
+      sendmail(attachments)
+    return attachments
+
+    }
+
+    function formatSartDate(firstDay){
+
+        if (firstDay == "mo"){
+            return firstMonday.replace(/-/g, "")
+          }
+
+        if (firstDay == "tu"){
+            return firstTuesday.replace(/-/g, "")
+          }
+
+        if (firstDay == "we"){
+            return firstWednesday.replace(/-/g, "");
+          }
+
+        if (firstDay == "th"){
+            return firstThursday.replace(/-/g, "");
+          }
+
+        if (firstDay == "fr"){
+            return firstFriday.replace(/-/g, "");}
+
+    }
+
+    function findRepeatDays(date){
+    
+    var dict = new Object();
+    dict["T"] = "tu";
+    dict["M"] = "mo";
+    dict["W"] = "we";
+    dict["R"] = "th";
+    dict["F"] = "fr";
+
+    spacePos = date.search(" ");
+    days = date.slice(0,spacePos);
+
+    i = 0;
+
+    var repeatDays = [];
+    while (i<days.length)
+    {
+        day = days.charAt(i);
+        repeatDays.push(dict[day]);
+        i = i + 1;
+    }
+
+    return repeatDays
+    }
+
+    function formatTime(date){
+
+        spacePos = date.search(" ");
+        days = date.slice(0,spacePos);
+        
+        endPos = date.search(";");
+        if (endPos == -1)
+        {
+            endPos = date.length;
+        }
+
+         time = date.slice(spacePos+1,endPos);
+         hyphenPos = time.search("-");
+         
+         startTime = time.slice(0,hyphenPos);
+         startHour =  startTime.slice(0,startTime.search(/\:/));
+         startMinutes = startTime.slice(startTime.search(/\:/)+1,startTime.length);
+         
+         endTime = time.slice(hyphenPos+1,time.length);
+         endHour =  endTime.slice(0,endTime.search(/\:/));
+         endMinutes = endTime.slice(endTime.search(/\:/)+1,endTime.length-2);
+        
+         if (endTime.search("pm") != -1 && endHour<12){
+                if (endHour > startHour)
+                {
+                startHour = String(parseInt(startHour)+12)
+                }
+                if (endHour == startHour && endHour != 12)
+                {
+                 startHour = String(parseInt(startHour)+12)
+                }
+                endHour = String(parseInt(endHour)+12)
+        }
+        
+        startTime = "T"+startHour+startMinutes+"00"
+        endTime = "T"+endHour+endMinutes+"00"
+
+        return[startTime,endTime]
+
+  }
+     
+
   }, 2000);
-
-
 
 
 
   // ******************** HELPER FUNCTIONS **********************/
   // Get the necessary semester information from the database
   // Returns a vector in the following format: [startDate, endDate, [olinMondays], [noClasses]]
+
+  
   function getSemesterInfo(){
     var startDate = null
     // Populate the startDate variable using databse info
@@ -291,8 +409,9 @@ MongoClient.connect(url, function(err, db) {
                                      ....]
                           firstDate: 'January 29, 2019'},
           ....
-      ]
-  */
+      ]*/
+
+  
   function getExludedDatesANDfirstDates(semesterInfo) {
     /**** THESE NEED TO BE PARSED CORRECTLY SO WE CAN USE THEM ****/
     //const startDate = semesterInfo[0];
