@@ -105,29 +105,32 @@ MongoClient.connect(url, function(err, db) {
 
   function icalGen(eventToAdd){
         const cal = ical();
-
-        // Get the day of the week so that we know which weekdays we need to exlude
+        // Get the days of the week so that we know which weekdays we need to exlude
         var excludedDates = []
-        switch(eventToAdd.weekday){
-          case "mo": excludedDates = mondayExclusions
-          break;
-          case "tu": excludedDates = tuesdayExclusions
-          break;
-          case "we": excludedDates = wednesdayExclusions
-          break;
-          case "th": excludedDates = thursdayExclusions
-          break;
-          case "fr": excludedDates = fridayExclusions
-          break;
+
+        // For every meeting day, get the exclusions
+        for(var i = 0; i < eventToAdd.weekday.length; i++)
+        {
+          switch(eventToAdd.weekday[i]){
+            case "mo": excludedDates = excludedDates.concat(mondayExclusions)
+            break;
+            case "tu": excludedDates = excludedDates.concat(tuesdayExclusions)
+            console.log("tuesday")
+            break;
+            case "we": excludedDates = excludedDates.concat(wednesdayExclusions)
+            console.log("wedensday")
+            break;
+            case "th": excludedDates = excludedDates.concat(thursdayExclusions)
+            break;
+            case "fr": excludedDates = excludedDates.concat(fridayExclusions)
+            break;
+          }
         }
-        console.log("HERE: " +excludedDates.toString())
 
         const event = cal.createEvent({
             start: eventToAdd.start,
             end: eventToAdd.end,
-            summary: 'Example Event',
-            description: 'It works ;)',
-            location: 'my room',
+            summary: eventToAdd.className,
             repeating: {
               freq: 'WEEKLY',
               until: endDate,
@@ -171,7 +174,7 @@ MongoClient.connect(url, function(err, db) {
   // Need to do a timeout because we need to wait until the info has been fully added to the database
   setTimeout(function(){
     router.post('/send', (req, res, next) => {
-       console.log("jksdj")
+       console.log("RES: "+res)
        extractClasses(reqClasses,convert,res,req)
 
      })
@@ -203,7 +206,7 @@ MongoClient.connect(url, function(err, db) {
          var iCalEvents = []
 
          for(var i = 0; i<reqClasses.length;i++){
-                 dbo.collection("courses").find({"Course Title" : "SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"}).toArray(function(err, result) {
+                 dbo.collection("courses").find({"Course Title" : reqClasses[i]}).toArray(function(err, result) {
                     if (err) throw err;
                       var eventToAdd = new Object()
                       startTime = formatTime(result[0].Time)[0]
@@ -211,10 +214,11 @@ MongoClient.connect(url, function(err, db) {
                       repeatDays = findRepeatDays(result[0].Time)
                       startDate = formatStartDate(repeatDays[0])
 
-                      eventToAdd.weekday = repeatDays[0];
+                      eventToAdd.weekday = repeatDays;
                       eventToAdd.days = repeatDays;
                       eventToAdd.start = startDate+startTime;
                       eventToAdd.end = startDate+endTime;
+                      eventToAdd.className = reqClasses
 
                       iCalEvents.push(icalGen(eventToAdd).toString())
 
@@ -229,8 +233,7 @@ MongoClient.connect(url, function(err, db) {
         for(var i = 0; i<iCalEvents.length;i++)
         {
             var attachment = new Object()
-
-            attachment.filename = "class.ics"
+            attachment.filename = "class.ics"//iCalEvents[i].slice(iCalEvents[i].search("SUMMARY"),10)+".ics"
             attachment.method = "request"
             attachment.content = iCalEvents[i]
 
