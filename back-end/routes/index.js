@@ -73,10 +73,10 @@ MongoClient.connect(url, function(err, db) {
 
 
     var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
-
-    var semesterInfo = getSemesterInfo()
   setTimeout(function(){
-    console.log("RIGHT HERE: " )//+semesterInfo[0].toString())
+    var semesterInfo = getSemesterInfo()
+
+  setTimeout(function(){
     // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
     var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
 
@@ -94,7 +94,6 @@ MongoClient.connect(url, function(err, db) {
     var firstFriday = excludedDaysANDfirstDates[4].firstDate;
 
     var endDate = formatEventsCalendarTime(semesterInfo[1][0])[0];
-  // var endDate = new Date('May 03 2019 00:00:00 UTC')
 
 
   // ******************** START ICAL SETUP *******************/
@@ -140,6 +139,18 @@ MongoClient.connect(url, function(err, db) {
         return cal
     }
 
+    // iCal Generator specific to the course calendar
+    function icalGenEvents(eventToAdd){
+          const cal = ical();
+
+          const event = cal.createEvent({
+              start: eventToAdd.date,
+              allDay: true,
+              summary: eventToAdd.description,
+          });
+
+          return cal
+      }
   // ******************** END ICAL SETUP *******************/
 
 
@@ -170,10 +181,13 @@ MongoClient.connect(url, function(err, db) {
 
 
 
-    router.post('/send', (req, res, next) => {
-       console.log("RES: "+res)
+     router.post('/send', (req, res, next) => {
        extractClasses(reqClasses,convert,res,req)
      })
+
+     router.post('/sendEvents', (req, res, next) => {
+        extractEvents(reqClasses,convert,res,req)
+      })
 
 
   function sendmail(attachments,res,req){
@@ -198,8 +212,39 @@ MongoClient.connect(url, function(err, db) {
     })
   }
 
+
+  function extractEvents(reqClasses,convert,res,req){
+       var iCalEvents = []
+       var eventDescription = []
+
+      // We need to create events for every entry in the database
+       dbo.collection("events").find().toArray(function(err, result) {
+         if (err) throw err;
+
+         // For each entry in the datbase, we want to add a new calendar event
+         for(var i = 0; i < result.length;i++){
+           var eventToAdd = new Object()
+
+           // Extract the date and description from the database
+           date = formatEventsCalendarTime(result[i].date)[0]
+           description = result[i].description
+
+           // Add these elements to the events object
+           eventToAdd.date = date
+           eventToAdd.description = description
+           eventDescription.push(description)
+
+            iCalEvents.push(icalGenEvents(eventToAdd).toString())
+        }
+      });
+
+      setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
+  }
+
+
     function extractClasses(reqClasses,convert,res,req){
          var iCalEvents = []
+         var eventDescription = []
 
          for(var i = 0; i<reqClasses.length;i++){
                  dbo.collection("courses").find({"Course Title" : reqClasses[i]}).toArray(function(err, result) {
@@ -214,22 +259,23 @@ MongoClient.connect(url, function(err, db) {
                       eventToAdd.days = repeatDays;
                       eventToAdd.start = startDate+startTime;
                       eventToAdd.end = startDate+endTime;
-                      eventToAdd.className = reqClasses
+                      eventToAdd.className = reqClasses;
+
+                      eventDescription.push(reqClasses)
 
                       iCalEvents.push(icalGen(eventToAdd).toString())
-
                    });
         }
-        setTimeout(function(){return convert(iCalEvents,res,req)},2000)
+        setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
     }
 
 
-    function convert(iCalEvents,res,req){
+    function convert(iCalEvents,res,req, eventDescription){
         var attachments = []
         for(var i = 0; i<iCalEvents.length;i++)
         {
             var attachment = new Object()
-            attachment.filename = "class.ics"//iCalEvents[i].slice(iCalEvents[i].search("SUMMARY"),10)+".ics"
+            attachment.filename = eventDescription[i]+".ics"//"class.ics"//iCalEvents[i].slice(iCalEvents[i].search("SUMMARY"),10)+".ics"
             attachment.method = "request"
             attachment.content = iCalEvents[i]
 
@@ -323,6 +369,7 @@ MongoClient.connect(url, function(err, db) {
         return[startTime,endTime]
   }
 }, 3000);
+}, 3000);
 
   // Parser to format event dates in the database
   function formatEventsCalendarTime(date){
@@ -385,8 +432,6 @@ MongoClient.connect(url, function(err, db) {
   // ******************** HELPER FUNCTIONS **********************/
   // Get the necessary semester information from the database
   // Returns a vector in the following format: [startDate, endDate, [olinMondays], [noClasses]]
-
-
   function getSemesterInfo(){
     var startDate = []
     // Populate the startDate variable using databse info
@@ -469,7 +514,6 @@ MongoClient.connect(url, function(err, db) {
                           firstDate: 'January 29, 2019'},
           ....
       ]*/
-
   function getExludedDatesANDfirstDates(semesterInfo) {
       const startDate = formatEventsCalendarTime(semesterInfo[0][0])[0];
       const endDate = formatEventsCalendarTime(semesterInfo[1][0])[0];
