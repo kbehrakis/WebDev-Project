@@ -1,7 +1,16 @@
 import React, {Component} from 'react';
 import axios from 'axios';
+import {FormGroup, Label, Input} from 'reactstrap';
 
 class ContactForm extends Component{
+    constructor(props, context) {
+      super(props, context);
+
+      this.state = {
+        allCourses: []
+      };
+    }
+
     getCourses = (e) => {
         e.preventDefault();
 
@@ -16,6 +25,7 @@ class ContactForm extends Component{
             data: {
                 name: name,
                 email: email,
+                reqClasses: ["ENGR3210: Sustainable Design"]    // THIS NEEDS TO BE UPDATED DYNAMICALLY BASED OFF allCourses ARRAY
             }
         }).then((response)=>{
             if (response.data.msg === 'success'){
@@ -34,7 +44,7 @@ class ContactForm extends Component{
           method: "POST",
           url:"http://localhost:3002/sendEvents",
           data: {
-              email: email,
+              email: email
           }
       }).then((response)=>{
           if (response.data.msg === 'success'){
@@ -50,6 +60,14 @@ class ContactForm extends Component{
 
     resetForm(){
         document.getElementById('contact-form').reset();
+    }
+
+    componentDidMount(){
+      axios.get('http://localhost:3002/listClasses')
+      .then(res => {
+          const courses = res.data;
+          this.setState({allCourses:courses});
+      })
     }
 
     render(){
@@ -68,6 +86,16 @@ class ContactForm extends Component{
                     <br></br>
                     <br></br>
                     <button type="submit" className="btn btn-primary" onClick={this.getCourses}>Get Course Meetings</button>
+                    <br></br>
+                    <br></br>
+                    <FormGroup check>
+                      {this.state.allCourses.map(function(object, i){
+                            return <Label type = "label" check>
+                                        <Input type="checkbox"/> {' '}
+                                        {object}
+                                   </Label>
+                      })}
+                    </FormGroup>
                 </form>
             </div>
         )

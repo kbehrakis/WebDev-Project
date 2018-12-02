@@ -73,7 +73,7 @@ MongoClient.connect(url, function(err, db) {
 
 
 //    var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
-var reqClasses = ["ENGR3210: Sustainable Design"]
+//var reqClasses = ["ENGR3210: Sustainable Design"]
   setTimeout(function(){
     var semesterInfo = getSemesterInfo()
 
@@ -208,13 +208,28 @@ var reqClasses = ["ENGR3210: Sustainable Design"]
 
 
      router.post('/send', (req, res, next) => {
-       extractClasses(reqClasses,convert,res,req)
+        extractClasses(req.body.reqClasses,convert,res,req)
      })
 
      router.post('/sendEvents', (req, res, next) => {
-        extractEvents(reqClasses,convert,res,req)
+        extractEvents(convert,res,req)
       })
 
+      // Function to get the list of all classes
+     router.get('/listClasses', function(req, res, next) {
+          var allCourses = []
+
+          dbo.collection("courses").find().toArray(function(err, result) {
+              if (err) throw err;
+
+              // For each entry in the datbase, we want to add it to the display list
+              for(var i = 0; i < result.length;i++){
+                var stringFormat = result[i].Course_Title
+                allCourses.push(stringFormat)
+              }
+              res.send(JSON.stringify(allCourses.filter(course => course.length != null)))
+          })
+       })
 
   function sendmail(attachments,res,req){
      var mail = {
@@ -239,7 +254,7 @@ var reqClasses = ["ENGR3210: Sustainable Design"]
   }
 
 
-  function extractEvents(reqClasses,convert,res,req){
+  function extractEvents(convert,res,req){
        var iCalEvents = []
        var eventDescription = []
 
@@ -281,9 +296,10 @@ var reqClasses = ["ENGR3210: Sustainable Design"]
          var eventDescription = []
 
          for(var i = 0; i<reqClasses.length;i++){
-                 dbo.collection("courses").find({"Course Title" : reqClasses[i]}).toArray(function(err, result) {
+                 dbo.collection("courses").find({"Course_Title" : reqClasses[i]}).toArray(function(err, result) {
                     if (err) throw err;
                       var eventToAdd = new Object()
+
                       startTime = formatTime(result[0].Time)[0]
                       endTime = formatTime(result[0].Time)[1]
                       repeatDays = findRepeatDays(result[0].Time)
