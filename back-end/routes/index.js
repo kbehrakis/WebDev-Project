@@ -145,8 +145,9 @@ MongoClient.connect(url, function(err, db) {
 
           const event = cal.createEvent({
               start: eventToAdd.date,
+              end: eventToAdd.endDate,
               allDay: true,
-              summary: eventToAdd.description,
+              summary: eventToAdd.description
           });
 
           return cal
@@ -227,14 +228,22 @@ MongoClient.connect(url, function(err, db) {
 
            // Extract the date and description from the database
            date = formatEventsCalendarTime(result[i].date)[0]
+           endDate = formatEventsCalendarTime(result[i].date)[1]
+
+           // If this is not a multi-day event, then set end date same as start date
+           if(endDate.includes("XX")){
+             endDate = date
+           }
+
            description = result[i].description
 
            // Add these elements to the events object
            eventToAdd.date = date
+           eventToAdd.endDate = moment(endDate).add(1, 'days').format('YYYY-MM-DD');
            eventToAdd.description = description
            eventDescription.push(description)
 
-            iCalEvents.push(icalGenEvents(eventToAdd).toString())
+           iCalEvents.push(icalGenEvents(eventToAdd).toString())
         }
       });
 
@@ -450,7 +459,7 @@ MongoClient.connect(url, function(err, db) {
     // Extract all Olin Mondays from the database
     var olinMondays = []
     // Populate the end Date variable using database info
-    dbo.collection("events").find({"description" :"Olin Monday � Monday class schedule in effect"}).toArray(function(err, result) {
+    dbo.collection("events").find({"description" :"Olin Monday: Monday class schedule in effect"}).toArray(function(err, result) {
       if (err) throw err;
       // Result is an array because of all olin mondays
       result.forEach(function(olinMonday) {
