@@ -7,8 +7,11 @@ class ContactForm extends Component{
       super(props, context);
 
       this.state = {
-        allCourses: []
+        allCourses: [],
+        chosenCourses:[]
       };
+
+      this.handleChecked = this.handleChecked.bind(this)
     }
 
     getCourses = (e) => {
@@ -70,6 +73,30 @@ class ContactForm extends Component{
       })
     }
 
+    handleChecked() {
+    //   e.preventDefault()
+
+       const courseName = document.getElementById('courseName').value;
+
+      // current array of chosen courses
+       const chosenCourses = this.state.chosenCourses
+       let index
+
+       // If course not in list, add it
+       if (!chosenCourses.includes(courseName)) {
+         // add the numerical value of the checkbox to options array
+         chosenCourses.push(courseName)
+       } else {
+         // Remove course if it's already there (unchedking the box)
+         index = chosenCourses.indexOf(courseName)
+         chosenCourses.splice(index, 1)
+       }
+
+       // update the state with the new array of options
+       this.setState({chosenCourses: chosenCourses})
+    }
+
+
     render(){
         return(
             <div className="col-sm-4 offset-sm-4">
@@ -90,10 +117,10 @@ class ContactForm extends Component{
                     <br></br>
                     <FormGroup check>
                       {this.state.allCourses.map(function(object, i){
-                            return <Label type = "label" check>
-                                        <Input type="checkbox"/> {' '}
-                                        {object}
-                                   </Label>
+                            return <label type = "label" check>
+                                        <input type="checkbox" onChange={this.handleChecked}/> {' '}
+                                        <label id="courseName">{object}</label>
+                                   </label>
                       })}
                     </FormGroup>
                 </form>
