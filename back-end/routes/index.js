@@ -72,7 +72,8 @@ MongoClient.connect(url, function(err, db) {
   //********** END ADDING COURSE DATA TO DATABASE **********
 
 
-    var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
+//    var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
+var reqClasses = ["ENGR3210: Sustainable Design"]
   setTimeout(function(){
     var semesterInfo = getSemesterInfo()
 
@@ -93,6 +94,7 @@ MongoClient.connect(url, function(err, db) {
     var firstThursday = excludedDaysANDfirstDates[3].firstDate;
     var firstFriday = excludedDaysANDfirstDates[4].firstDate;
 
+    var olinMondays = semesterInfo[2].map(x => formatEventsCalendarTime(x)[0]);
     var endDate = formatEventsCalendarTime(semesterInfo[1][0])[0];
 
 
@@ -112,8 +114,20 @@ MongoClient.connect(url, function(err, db) {
         for(var i = 0; i < eventToAdd.weekday.length; i++)
         {
           switch(eventToAdd.weekday[i]){
-            case "mo": excludedDates = excludedDates.concat(mondayExclusions)
-            break;
+              case "mo": {
+                  excludedDates = excludedDates.concat(mondayExclusions)
+
+                  // Add the Olin Monday days back in
+          /*        olinMondays.forEach(function(olinMonday) {
+                      const event = cal.createEvent({
+                          start: olinMonday.replace(/-/g, '')+eventToAdd.startTime,
+                          end: olinMonday.replace(/-/g, '')+eventToAdd.endTime,
+                          summary: eventToAdd.className
+                      })
+                  })
+                  */
+                  break;
+              }
             case "tu": excludedDates = excludedDates.concat(tuesdayExclusions)
             break;
             case "we": excludedDates = excludedDates.concat(wednesdayExclusions)
@@ -138,6 +152,17 @@ MongoClient.connect(url, function(err, db) {
         });
         return cal
     }
+
+    function icalGenOlinMondays(eventToAdd){
+          const cal = ical();
+
+          const event = cal.createEvent({
+              start: eventToAdd.start,
+              end: eventToAdd.end,
+              summary: eventToAdd.className
+          });
+          return cal
+      }
 
     // iCal Generator specific to the course calendar
     function icalGenEvents(eventToAdd){
@@ -266,13 +291,40 @@ MongoClient.connect(url, function(err, db) {
 
                       eventToAdd.weekday = repeatDays;
                       eventToAdd.days = repeatDays;
+                      eventToAdd.startTime = startTime;
                       eventToAdd.start = startDate+startTime;
                       eventToAdd.end = startDate+endTime;
+                      eventToAdd.endTime = endTime;
                       eventToAdd.className = reqClasses;
 
-                      eventDescription.push(reqClasses)
+                      eventDescription.push(eventToAdd.className)
 
                       iCalEvents.push(icalGen(eventToAdd).toString())
+
+                      // If it's an  Monday, we need to add in the Olin Mondays
+                      if(moment(startDate).day() == 1){
+                        var mondayEventToAdd = new Object()
+
+                        olinMondays.forEach(function(olinMonday) {
+                            startTime = eventToAdd.startTime,
+                            endTime = eventToAdd.endTime,
+                            repeatDays = []
+                            startDate = olinMonday.replace(/-/g, '')
+                            endDate = olinMonday.replace(/-/g, '')
+
+                            mondayEventToAdd.weekday = repeatDays;
+                            mondayEventToAdd.days = repeatDays;
+                            mondayEventToAdd.startTime = startTime;
+                            mondayEventToAdd.start = startDate+startTime;
+                            mondayEventToAdd.end = endDate+endTime;
+                            mondayEventToAdd.endTime = endTime;
+                            mondayEventToAdd.className = reqClasses+" - Olin Monday";
+
+                            eventDescription.push(mondayEventToAdd.className)
+
+                            iCalEvents.push(icalGenOlinMondays(mondayEventToAdd).toString())
+                        })
+                      }
                    });
         }
         setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
