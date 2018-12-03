@@ -208,6 +208,7 @@ MongoClient.connect(url, function(err, db) {
 
 
      router.post('/send', (req, res, next) => {
+        console.log(req.body.reqClasses)
         extractClasses(req.body.reqClasses,convert,res,req)
      })
 

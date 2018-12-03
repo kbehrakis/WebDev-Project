@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import axios from 'axios';
-import {FormGroup, Label, Input} from 'reactstrap';
+import {FormGroup} from 'reactstrap';
+import $ from 'jquery';
 
 class ContactForm extends Component{
     constructor(props, context) {
@@ -8,18 +9,22 @@ class ContactForm extends Component{
 
       this.state = {
         allCourses: [],
-        chosenCourses:[]
+        chosenCourses:[],
+        isChecked: false,
       };
 
-      this.handleChecked = this.handleChecked.bind(this)
+      this.handleChecked = this.handleChecked.bind(this);
     }
 
     getCourses = (e) => {
         e.preventDefault();
 
+        console.log("HERES THE LIST: "+this.state.chosenCourses)
+
         //Extract the name and email that were entered
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
+        const courseTitle = document.getElementById('courseTitle').value;
 
         // https://alligator.io/react/axios-react/
         axios({
@@ -28,7 +33,7 @@ class ContactForm extends Component{
             data: {
                 name: name,
                 email: email,
-                reqClasses: ["ENGR3210: Sustainable Design"]    // THIS NEEDS TO BE UPDATED DYNAMICALLY BASED OFF allCourses ARRAY
+                reqClasses: [courseTitle]   // this.state.chosenCourses // ["ENGR3210: Sustainable Design"]    // THIS NEEDS TO BE UPDATED DYNAMICALLY BASED OFF allCourses ARRAY
             }
         }).then((response)=>{
             if (response.data.msg === 'success'){
@@ -54,7 +59,7 @@ class ContactForm extends Component{
               alert("Message with Events Sent.");
               this.resetForm()
           }else if(response.data.msg === 'fail'){
-              alert("Message eith Events Failed to Send.")
+              alert("Message with Events Failed to Send.")
           }
       })
 
@@ -73,21 +78,26 @@ class ContactForm extends Component{
       })
     }
 
-    handleChecked() {
-    //   e.preventDefault()
+    handleChecked(event) {
+       event.preventDefault()
 
-       const courseName = document.getElementById('courseName').value;
+       this.setState({isChecked: !this.state.isChecked});
 
-      // current array of chosen courses
-       const chosenCourses = this.state.chosenCourses
+       var id = 'course'
+       var courseName= $("#"+id).parent().text().trim();
+
+       // Surrent array of chosen courses
+       var chosenCourses = this.state.chosenCourses
        let index
 
        // If course not in list, add it
        if (!chosenCourses.includes(courseName)) {
          // add the numerical value of the checkbox to options array
+         console.log("Adding course to list: "+courseName)
          chosenCourses.push(courseName)
        } else {
-         // Remove course if it's already there (unchedking the box)
+          console.log("Removing course from list: "+courseName)
+         // Remove course if unchecking the box
          index = chosenCourses.indexOf(courseName)
          chosenCourses.splice(index, 1)
        }
@@ -96,11 +106,11 @@ class ContactForm extends Component{
        this.setState({chosenCourses: chosenCourses})
     }
 
-
     render(){
         return(
             <div className="col-sm-4 offset-sm-4">
                 <form id="contact-form" method="POST">
+                    <br></br>
                     <div className="form-group">
                         <label for="name">Name</label>
                         <input type="text" className="form-control" id="name" />
@@ -109,6 +119,10 @@ class ContactForm extends Component{
                         <label for="exampleInputEmail1">Email address</label>
                         <input type="email" className="form-control" id="email" aria-describedby="emailHelp" />
                     </div>
+                    <div className="form-group">
+                        <label for="exampleInputEmail1">Course Title</label>
+                        <input type="email" className="form-control" id="courseTitle" />
+                    </div>
                     <button type = "submit" className="btn btn-primary" onClick={this.getCalendar}>Get Calendar Events</button>
                     <br></br>
                     <br></br>
@@ -116,10 +130,10 @@ class ContactForm extends Component{
                     <br></br>
                     <br></br>
                     <FormGroup check>
-                      {this.state.allCourses.map(function(object, i){
-                            return <label type = "label" check>
-                                        <input type="checkbox" onChange={this.handleChecked}/> {' '}
-                                        <label id="courseName">{object}</label>
+                      {this.state.allCourses.map((object, i) =>{
+                            return <label>
+                                        <input  type="checkbox" id="course" name="isChecked" checked={this.state.isChecked} onChange={this.handleChecked}/>
+                                        {object}
                                    </label>
                       })}
                     </FormGroup>
