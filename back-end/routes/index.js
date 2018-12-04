@@ -165,15 +165,18 @@ MongoClient.connect(url, function(err, db) {
       }
 
     // iCal Generator specific to the course calendar
-    function icalGenEvents(eventToAdd){
+    function icalGenEvents(eventList){
           const cal = ical();
 
-          const event = cal.createEvent({
-              start: eventToAdd.date,
-              end: eventToAdd.endDate,
-              allDay: true,
-              summary: eventToAdd.description
-          });
+          // For each event, add it to a calendar
+          eventList.forEach(function(event) {
+              const anEvent = cal.createEvent({
+                                        start: event.date,
+                                        end: event.endDate,
+                                        allDay: true,
+                                        summary: event.description
+                                    });
+          })
 
           return cal
       }
@@ -258,6 +261,7 @@ MongoClient.connect(url, function(err, db) {
   function extractEvents(convert,res,req){
        var iCalEvents = []
        var eventDescription = []
+       var eventList = []
 
       // We need to create events for every entry in the database
        dbo.collection("events").find().toArray(function(err, result) {
@@ -284,11 +288,13 @@ MongoClient.connect(url, function(err, db) {
            eventToAdd.description = description
            eventDescription.push(description)
 
-           iCalEvents.push(icalGenEvents(eventToAdd).toString())
+           eventList.push(eventToAdd)
         }
+
+        iCalEvents.push(icalGenEvents(eventList).toString())
       });
 
-      setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
+      setTimeout(function(){return convert(iCalEvents,res,req, ["Olin 2019 Events"])},2000)
   }
 
 
