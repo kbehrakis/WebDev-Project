@@ -116,16 +116,6 @@ MongoClient.connect(url, function(err, db) {
           switch(eventToAdd.weekday[i]){
               case "mo": {
                   excludedDates = excludedDates.concat(mondayExclusions)
-
-                  // Add the Olin Monday days back in
-          /*        olinMondays.forEach(function(olinMonday) {
-                      const event = cal.createEvent({
-                          start: olinMonday.replace(/-/g, '')+eventToAdd.startTime,
-                          end: olinMonday.replace(/-/g, '')+eventToAdd.endTime,
-                          summary: eventToAdd.className
-                      })
-                  })
-                  */
                   break;
               }
             case "tu": excludedDates = excludedDates.concat(tuesdayExclusions)
@@ -308,9 +298,17 @@ MongoClient.connect(url, function(err, db) {
                       var eventToAdd = new Object()
 
                       startTime = formatTime(result[0].Time)[0]
+                      console.log("startTime: "+startTime)
+                      console.log("result: "+result[0].Time)
+
+
                       endTime = formatTime(result[0].Time)[1]
                       repeatDays = findRepeatDays(result[0].Time)
                       startDate = formatStartDate(repeatDays[0])
+
+                      console.log("repeatDays: "+repeatDays)
+                      console.log("startDate: "+ startDate)
+                      console.log("fullDate: "+ startDate+startTime)
 
                       eventToAdd.weekday = repeatDays;
                       eventToAdd.days = repeatDays;
@@ -318,7 +316,15 @@ MongoClient.connect(url, function(err, db) {
                       eventToAdd.start = startDate+startTime;
                       eventToAdd.end = startDate+endTime;
                       eventToAdd.endTime = endTime;
-                      eventToAdd.className = reqClasses;
+
+                      // If the user entered in a preferred title, use that title
+                      if(req.body.desiredName.length > 0){
+                        eventToAdd.className = [req.body.desiredName];
+                      }
+                      // Otherwise, use the full course Name
+                      else{
+                        eventToAdd.className = reqClasses;
+                      }
 
                       eventDescription.push(eventToAdd.className)
 
@@ -329,11 +335,12 @@ MongoClient.connect(url, function(err, db) {
                         var mondayEventToAdd = new Object()
 
                         olinMondays.forEach(function(olinMonday) {
-                            startTime = eventToAdd.startTime,
-                            endTime = eventToAdd.endTime,
+                            startTime = eventToAdd.startTime
+                            endTime = eventToAdd.endTime
                             repeatDays = []
                             startDate = olinMonday.replace(/-/g, '')
                             endDate = olinMonday.replace(/-/g, '')
+
 
                             mondayEventToAdd.weekday = repeatDays;
                             mondayEventToAdd.days = repeatDays;
@@ -341,7 +348,18 @@ MongoClient.connect(url, function(err, db) {
                             mondayEventToAdd.start = startDate+startTime;
                             mondayEventToAdd.end = endDate+endTime;
                             mondayEventToAdd.endTime = endTime;
-                            mondayEventToAdd.className = reqClasses+" - Olin Monday";
+
+                            // If the user entered in a preferred title, use that title
+                            if(req.body.desiredName.length > 0){
+                              mondayEventToAdd.className = [req.body.desiredName+" - Olin Monday"];
+                            }
+                            // Otherwise, use the full course name
+                            else{
+                              mondayEventToAdd.className = reqClasses+" - Olin Monday";
+                            }
+
+
+
 
                             eventDescription.push(mondayEventToAdd.className)
 
@@ -356,6 +374,8 @@ MongoClient.connect(url, function(err, db) {
 
     function convert(iCalEvents,res,req, eventDescription){
         var attachments = []
+
+
         for(var i = 0; i<iCalEvents.length;i++)
         {
             var attachment = new Object()
