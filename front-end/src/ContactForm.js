@@ -25,6 +25,7 @@ class ContactForm extends Component{
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
         const courseTitle = document.getElementById('courseTitle').value;
+        const desiredName = document.getElementById('desiredName').value;
 
         // https://alligator.io/react/axios-react/
         axios({
@@ -33,6 +34,7 @@ class ContactForm extends Component{
             data: {
                 name: name,
                 email: email,
+                desiredName: desiredName,
                 reqClasses: [courseTitle]   // this.state.chosenCourses // ["ENGR3210: Sustainable Design"]    // THIS NEEDS TO BE UPDATED DYNAMICALLY BASED OFF allCourses ARRAY
             }
         }).then((response)=>{
@@ -119,13 +121,19 @@ class ContactForm extends Component{
                         <label for="exampleInputEmail1">Email address</label>
                         <input type="email" className="form-control" id="email" aria-describedby="emailHelp" />
                     </div>
-                    <div className="form-group">
-                        <label for="exampleInputEmail1">Course Title</label>
-                        <input type="email" className="form-control" id="courseTitle" />
-                    </div>
                     <button type = "submit" className="btn btn-primary" onClick={this.getCalendar}>Get Calendar Events</button>
                     <br></br>
                     <br></br>
+                    <br></br>
+                    <br></br>
+                    <div className="form-group">
+                        <label for="exampleCourseTitle">Course Title</label>
+                        <input type="email" className="form-control" id="courseTitle" />
+                    </div>
+                    <div className="form-group">
+                        <label for="exampleDesiredTitle">Title To Display on iCals</label>
+                        <input type="email" className="form-control" id="desiredName" />
+                    </div>
                     <button type="submit" className="btn btn-primary" onClick={this.getCourses}>Get Course Meetings</button>
                     <br></br>
                     <br></br>
