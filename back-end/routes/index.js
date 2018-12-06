@@ -58,6 +58,7 @@ MongoClient.connect(url, function(err, db) {
   // Goal: Extract the course data from the csv and add them to a mongo database
   // Approach: CSV data -> JSON -> database
   // https://www.npmjs.com/package/csvtojson
+  dbo.dropDatabase();
   const coursesFilePath='./csv/2019courses.csv'
 
   // Convert the csv file to a json object, then add jsonObj to database

@@ -68,6 +68,13 @@ class ContactForm extends Component{
       event.preventDefault();
     }
 
+
+    auto = (event) => {
+
+          
+}
+
+
     resetForm(){
         document.getElementById('contact-form').reset();
     }
@@ -77,6 +84,15 @@ class ContactForm extends Component{
       .then(res => {
           const courses = res.data;
           this.setState({allCourses:courses});
+          var arr = this.state.allCourses
+          var list = document.getElementById('mylist');
+          console.log(arr)
+          arr.forEach(function(item){
+          var option = document.createElement('option');
+            option.value = item;
+            list.appendChild(option);
+                });
+
       })
     }
 
@@ -111,6 +127,11 @@ class ContactForm extends Component{
     render(){
         return(
             <div className="col-sm-4 offset-sm-4">
+           <link rel="stylesheet"  type="text/css" href="awesomplete.css" />
+            <script src="awesomplete.js" async></script>
+            <datalist id="mylist"></datalist>
+  
+
                 <form id="contact-form" method="POST">
                     <br></br>
                     <div className="form-group">
@@ -128,7 +149,7 @@ class ContactForm extends Component{
                     <br></br>
                     <div className="form-group">
                         <label for="exampleCourseTitle">Course Title</label>
-                        <input type="email" className="form-control" id="courseTitle" />
+                        <input list="mylist" onClick = {this.auto} className="form-control" id="courseTitle" />
                     </div>
                     <div className="form-group">
                         <label for="exampleDesiredTitle">Title To Display on iCals</label>
@@ -137,14 +158,6 @@ class ContactForm extends Component{
                     <button type="submit" className="btn btn-primary" onClick={this.getCourses}>Get Course Meetings</button>
                     <br></br>
                     <br></br>
-                    <FormGroup check>
-                      {this.state.allCourses.map((object, i) =>{
-                            return <label>
-                                        <input  type="checkbox" id="course" name="isChecked" checked={this.state.isChecked} onChange={this.handleChecked}/>
-                                        {object}
-                                   </label>
-                      })}
-                    </FormGroup>
                 </form>
             </div>
         )
