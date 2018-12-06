@@ -310,6 +310,7 @@ MongoClient.connect(url, function(err, db) {
                       console.log("repeatDays: "+repeatDays)
                       console.log("startDate: "+ startDate)
                       console.log("fullDate: "+ startDate+startTime)
+                      console.log("startTime: "+startTime)
 
                       eventToAdd.weekday = repeatDays;
                       eventToAdd.days = repeatDays;
@@ -444,14 +445,23 @@ MongoClient.connect(url, function(err, db) {
         {
             endPos = date.length;
         }
+        else {
+        //  formatTime(date.slice(endPos,endPos.length))
+        }
 
          time = date.slice(spacePos+1,endPos);
          hyphenPos = time.search("-");
 
          startTime = time.slice(0,hyphenPos);
-         startHour =  startTime.slice(0,startTime.search(/\:/));
-         startMinutes = startTime.slice(startTime.search(/\:/)+1,startTime.length);
-
+         var x = startTime.search(/\:/)
+         if (x==-1){
+           startHour =  startTime.slice(0,hyphenPos);
+            startMinutes = "00";
+         }
+         else{
+           startHour =  startTime.slice(0,x);
+           startMinutes = startTime.slice(startTime.search(/\:/)+1,startTime.length);
+         }
          endTime = time.slice(hyphenPos+1,time.length);
          endHour =  endTime.slice(0,endTime.search(/\:/));
          endMinutes = endTime.slice(endTime.search(/\:/)+1,endTime.length-2);
@@ -468,7 +478,13 @@ MongoClient.connect(url, function(err, db) {
                 endHour = String(parseInt(endHour)+12)
         }
 
+
+        if (startHour.length<2){
+          startHour = "0" + startHour;
+        }
         startTime = "T"+startHour+startMinutes+"00"
+        console.log("startHour+ "+startHour)
+        console.log("startMinutes+ "+startMinutes)
         endTime = "T"+endHour+endMinutes+"00"
 
         return[startTime,endTime]
