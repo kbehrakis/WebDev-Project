@@ -4,7 +4,9 @@ var router = express.Router();
 var nodemailer = require('nodemailer');
 const creds = require('../config/config');
 
-const moment = require('moment');
+const moment = require('moment-timezone');
+moment.tz.setDefault("Europe/London");
+
 
 //********** START ADDING OLIN CALENDAR DATA TO DATABASE **********
 // Goal: Extract the calendar events from the csv and add them to a mongo database
@@ -134,6 +136,7 @@ MongoClient.connect(url, function(err, db) {
             start: eventToAdd.start,
             end: eventToAdd.end,
             summary: eventToAdd.className,
+            timezone: 'America/Boston',
             repeating: {
               freq: 'WEEKLY',
               until: moment(endDate),
@@ -150,7 +153,8 @@ MongoClient.connect(url, function(err, db) {
           const event = cal.createEvent({
               start: eventToAdd.start,
               end: eventToAdd.end,
-              summary: eventToAdd.className
+              summary: eventToAdd.className,
+              timezone: 'America/Boston'
           });
           return cal
       }
@@ -165,7 +169,8 @@ MongoClient.connect(url, function(err, db) {
                                         start: event.date,
                                         end: event.endDate,
                                         allDay: true,
-                                        summary: event.description
+                                        summary: event.description,
+                                        timezone: 'America/Boston'
                                     });
           })
 
@@ -202,7 +207,6 @@ MongoClient.connect(url, function(err, db) {
 
 
      router.post('/send', (req, res, next) => {
-        console.log(req.body.reqClasses)
         extractClasses(req.body.reqClasses,convert,res,req)
      })
 
@@ -231,7 +235,7 @@ MongoClient.connect(url, function(err, db) {
       from:  req.body.name,           // Name of the recipient
       to: req.body.email,            // Email we want to send the message to
       subject: 'iCals for the 2019 Semester',
-      text: "Hi! Thanks for using the Olin iCalMaker.  Attached are the iCals you requested.",
+      text: "Hi! Thanks for using the Olin iCalMaker.  Attached are the iCals you requested.  Please be sure to accept ALL attached iCals.",
       attachments: attachments}
 
     // https://nodemailer.com/transports/sendmail/
@@ -294,7 +298,6 @@ MongoClient.connect(url, function(err, db) {
          var eventDescription = []
          var extraDate = 0
         dbo.collection("courses").find({"Course_Title" : reqClasses[0]}).toArray(function(err, result) {
-                   console.log("Hi")
          while(extraDate != -1){
                     if (err) throw err;
                       var eventToAdd = new Object()
@@ -310,19 +313,10 @@ MongoClient.connect(url, function(err, db) {
                       startTime = time[0]
                       endTime = time[1]
                       extraDate = time[2]
-                      console.log("extraDate: "+extraDate)
-                      console.log("startTime: "+startTime)
-                      console.log("result: "+result[0].Time)
 
 
                       repeatDays = findRepeatDays(date)
                       startDate = formatStartDate(repeatDays[0])
-
-
-                      console.log("repeatDays: "+repeatDays)
-                      console.log("startDate: "+ startDate)
-                      console.log("fullDate: "+ startDate+startTime)
-                      console.log("startTime: "+startTime)
 
                       eventToAdd.weekday = repeatDays;
                       eventToAdd.days = repeatDays;
@@ -372,16 +366,13 @@ MongoClient.connect(url, function(err, db) {
                               mondayEventToAdd.className = reqClasses+" - Olin Monday";
                             }
 
-
-
-
                             eventDescription.push(mondayEventToAdd.className)
 
                             iCalEvents.push(icalGenOlinMondays(mondayEventToAdd).toString())
                         })
                       }
                   } });
-        
+
         setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
     }
 
@@ -399,7 +390,6 @@ MongoClient.connect(url, function(err, db) {
 
             attachments.push(attachment)
         }
-        console.log(attachments)
         sendmail(attachments,res,req)
        return attachments
     }
@@ -451,7 +441,7 @@ MongoClient.connect(url, function(err, db) {
     function formatTime(date){
         spacePos = date.search(" ");
         days = date.slice(0,spacePos);
-        var extraDate = -1 
+        var extraDate = -1
 
         endPos = date.search(";");
         if (endPos == -1)
@@ -496,8 +486,6 @@ MongoClient.connect(url, function(err, db) {
           startHour = "0" + startHour;
         }
         startTime = "T"+startHour+startMinutes+"00"
-        console.log("startHour+ "+startHour)
-        console.log("startMinutes+ "+startMinutes)
         endTime = "T"+endHour+endMinutes+"00"
 
 
@@ -703,7 +691,6 @@ MongoClient.connect(url, function(err, db) {
         day = day + 1
       });
 
-      console.log(jsonObject);
       return jsonObject;
   }
 });
