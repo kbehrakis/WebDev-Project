@@ -292,20 +292,32 @@ MongoClient.connect(url, function(err, db) {
     function extractClasses(reqClasses,convert,res,req){
          var iCalEvents = []
          var eventDescription = []
-
-         for(var i = 0; i<reqClasses.length;i++){
-                 dbo.collection("courses").find({"Course_Title" : reqClasses[i]}).toArray(function(err, result) {
+         var extraDate = 0
+        dbo.collection("courses").find({"Course_Title" : reqClasses[0]}).toArray(function(err, result) {
+                   console.log("Hi")
+         while(extraDate != -1){
                     if (err) throw err;
                       var eventToAdd = new Object()
-
-                      startTime = formatTime(result[0].Time)[0]
+                      if (extraDate != 0)
+                      {
+                      time = formatTime(extraDate)
+                      date = extraDate
+                      }
+                      else{
+                       date = result[0].Time
+                      time = formatTime(result[0].Time)
+                      }
+                      startTime = time[0]
+                      endTime = time[1]
+                      extraDate = time[2]
+                      console.log("extraDate: "+extraDate)
                       console.log("startTime: "+startTime)
                       console.log("result: "+result[0].Time)
 
 
-                      endTime = formatTime(result[0].Time)[1]
-                      repeatDays = findRepeatDays(result[0].Time)
+                      repeatDays = findRepeatDays(date)
                       startDate = formatStartDate(repeatDays[0])
+
 
                       console.log("repeatDays: "+repeatDays)
                       console.log("startDate: "+ startDate)
@@ -368,8 +380,8 @@ MongoClient.connect(url, function(err, db) {
                             iCalEvents.push(icalGenOlinMondays(mondayEventToAdd).toString())
                         })
                       }
-                   });
-        }
+                  } });
+        
         setTimeout(function(){return convert(iCalEvents,res,req, eventDescription)},2000)
     }
 
@@ -439,6 +451,7 @@ MongoClient.connect(url, function(err, db) {
     function formatTime(date){
         spacePos = date.search(" ");
         days = date.slice(0,spacePos);
+        var extraDate = -1 
 
         endPos = date.search(";");
         if (endPos == -1)
@@ -446,7 +459,7 @@ MongoClient.connect(url, function(err, db) {
             endPos = date.length;
         }
         else {
-        //  formatTime(date.slice(endPos,endPos.length))
+         extraDate = date.slice(endPos+2,endPos.length)
         }
 
          time = date.slice(spacePos+1,endPos);
@@ -487,7 +500,8 @@ MongoClient.connect(url, function(err, db) {
         console.log("startMinutes+ "+startMinutes)
         endTime = "T"+endHour+endMinutes+"00"
 
-        return[startTime,endTime]
+
+        return[startTime,endTime,extraDate]
   }
 }, 3000);
 }, 3000);
