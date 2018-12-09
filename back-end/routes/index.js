@@ -4,6 +4,7 @@ var router = express.Router();
 var nodemailer = require('nodemailer');
 const creds = require('../config/config');
 
+// Setting the timezone to default to UTC, then convert to EST later on
 const moment = require('moment-timezone');
 moment.tz.setDefault("Europe/London");
 
