@@ -19,7 +19,8 @@ const csv = require('csvtojson')
 // Setup for the database
 // https://www.w3schools.com/nodejs/nodejs_mongodb_insert.asp
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/";
+//var url = "mongodb://localhost:27017/";
+var url = "mongodb://heroku_hhl60p2f:msgs8c5n35pad4fhg06fel7nno@ds229474.mlab.com:29474/heroku_hhl60p2f"
 
 // Establish the connection
 MongoClient.connect(url, function(err, db) {
