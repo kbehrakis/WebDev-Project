@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node app.js",
+    "start": "--prefix ./front-end react-scripts start && --prefix ./back-end node ./bin/www",
     "postinstall": "npm --prefix ./front-end install && npm --prefix ./back-end install"
   }
 }
