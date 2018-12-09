@@ -1,5 +1,5 @@
 "scripts": {
   "start": "node index.js",
   "test": "mocha",
-  "postinstall": "npm --prefix ./front install && npm --prefix ./back install""
+  "postinstall": "npm --prefix ./front-end install && npm --prefix ./back-end install"
 }
