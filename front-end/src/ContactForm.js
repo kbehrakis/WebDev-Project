@@ -52,7 +52,7 @@ class ContactForm extends Component{
       axios({
           method: "POST",
         //  url:"http://localhost:3002/sendEvents",
-          url: "http://olin-ical-generator-backend.herokuapp.com/sendEvents",
+          url: "https://olin-ical-generator-backend.herokuapp.com/sendEvents",
           data: {
               email: email
           }
