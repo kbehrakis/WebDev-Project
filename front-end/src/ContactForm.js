@@ -71,7 +71,7 @@ class ContactForm extends Component{
 
     auto = (event) => {
 
-          
+
 }
 
 
@@ -130,7 +130,7 @@ class ContactForm extends Component{
            <link rel="stylesheet"  type="text/css" href="awesomplete.css" />
             <script src="awesomplete.js" async></script>
             <datalist id="mylist"></datalist>
-  
+
 
                 <form id="contact-form" method="POST">
                     <br></br>

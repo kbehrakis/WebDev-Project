@@ -27,15 +27,13 @@ MongoClient.connect(url, function(err, db) {
   // Error catching
   if (err) throw err;
   // Database name is mydb, collection is events
-  var dbo = db.db("mydb");
+  var dbo = db.db('heroku_hhl60p2f')
 
   // Convert the csv file to a json object, then add jsonObj to database
   csv().fromFile(csvFilePath).then((jsonObj)=>{
       // Error catching
       if (err) throw err;
 
-      // database name is mydb, collection is events
-      var dbo = db.db("mydb");
       var myobj = jsonObj;
 
       dbo.collection("events").insertMany(myobj, function(err, res) {
