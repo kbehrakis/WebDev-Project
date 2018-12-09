@@ -75,8 +75,6 @@ MongoClient.connect(url, function(err, db) {
   //********** END ADDING COURSE DATA TO DATABASE **********
 
 
-//    var reqClasses = ["SCI1399: Special Topics in Chemistry: Paper Panacea, Part 1"];
-//var reqClasses = ["ENGR3210: Sustainable Design"]
   setTimeout(function(){
     var semesterInfo = getSemesterInfo()
 
@@ -139,7 +137,7 @@ MongoClient.connect(url, function(err, db) {
             timezone: 'America/Boston',
             repeating: {
               freq: 'WEEKLY',
-              until: moment(endDate),
+              until: endDate,
               exclude: excludedDates,
               byDay: eventToAdd.days,
               }
@@ -153,7 +151,8 @@ MongoClient.connect(url, function(err, db) {
           const event = cal.createEvent({
               start: eventToAdd.start,
               end: eventToAdd.end,
-              summary: eventToAdd.className
+              summary: eventToAdd.className,
+              timezone: 'America/Boston'
           });
           return cal
       }
@@ -164,12 +163,13 @@ MongoClient.connect(url, function(err, db) {
 
           // For each event, add it to a calendar
           eventList.forEach(function(event) {
-              console.log("description: "+event.description+", start: "+event.date+", end: "+event.endDate)
+          //    console.log("description: "+event.description+", start: "+event.date+", end: "+event.endDate)
               const anEvent = cal.createEvent({
                                         start: event.date,
                                         end: event.endDate,
                                         allDay: true,
-                                        summary: event.description
+                                        summary: event.description,
+                                        timezone: 'America/Boston'
                                     });
           })
 
@@ -286,7 +286,9 @@ MongoClient.connect(url, function(err, db) {
            eventList.push(eventToAdd)
         }
 
-        iCalEvents.push(icalGenEvents(eventList).toString())
+        var events = icalGenEvents(eventList).toString();
+        iCalEvents.push(events)
+      //  console.log("events: "+events)
       });
 
       setTimeout(function(){return convert(iCalEvents,res,req, ["Olin 2019 Events"])},2000)
