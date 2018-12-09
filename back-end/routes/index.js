@@ -28,6 +28,7 @@ MongoClient.connect(url, function(err, db) {
   if (err) throw err;
   // Database name is mydb, collection is events
   var dbo = db.db('heroku_hhl60p2f')
+  dbo.dropDatabase();
 
   // Convert the csv file to a json object, then add jsonObj to database
   csv().fromFile(csvFilePath).then((jsonObj)=>{
@@ -60,7 +61,6 @@ MongoClient.connect(url, function(err, db) {
   // Goal: Extract the course data from the csv and add them to a mongo database
   // Approach: CSV data -> JSON -> database
   // https://www.npmjs.com/package/csvtojson
-  //dbo.dropDatabase();
   const coursesFilePath='./csv/2019courses.csv'
 
   // Convert the csv file to a json object, then add jsonObj to database
@@ -491,8 +491,8 @@ MongoClient.connect(url, function(err, db) {
 
         return[startTime,endTime,extraDate]
   }
-}, 3000);
-}, 3000);
+}, 1000);
+}, 1000);
 
   // Parser to format event dates in the database
   function formatEventsCalendarTime(date){
