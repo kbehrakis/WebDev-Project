@@ -19,8 +19,6 @@ class ContactForm extends Component{
     getCourses = (e) => {
         e.preventDefault();
 
-        console.log("HERES THE LIST: "+this.state.chosenCourses)
-
         //Extract the name and email that were entered
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
@@ -30,12 +28,13 @@ class ContactForm extends Component{
         // https://alligator.io/react/axios-react/
         axios({
             method: "POST",
-            url:"http://localhost:3002/send",
+          //  url:"http://localhost:3002/send",
+            url: "https://olin-ical-generator-backend.herokuapp.com/send",
             data: {
                 name: name,
                 email: email,
                 desiredName: desiredName,
-                reqClasses: [courseTitle]   // this.state.chosenCourses // ["ENGR3210: Sustainable Design"]    // THIS NEEDS TO BE UPDATED DYNAMICALLY BASED OFF allCourses ARRAY
+                reqClasses: [courseTitle]
             }
         }).then((response)=>{
             if (response.data.msg === 'success'){
@@ -52,7 +51,8 @@ class ContactForm extends Component{
 
       axios({
           method: "POST",
-          url:"http://localhost:3002/sendEvents",
+        //  url:"http://localhost:3002/sendEvents",
+          url: "http://olin-ical-generator-backend.herokuapp.com/sendEvents",
           data: {
               email: email
           }
@@ -74,13 +74,12 @@ class ContactForm extends Component{
 
 }
 
-
     resetForm(){
         document.getElementById('contact-form').reset();
     }
 
     componentDidMount(){
-      axios.get('http://localhost:3002/listClasses')
+      axios.get(/*'http://localhost:3002/listClasses'*/'https://olin-ical-generator-backend.herokuapp.com/listClasses')
       .then(res => {
           const courses = res.data;
           this.setState({allCourses:courses});
