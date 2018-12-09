@@ -153,8 +153,7 @@ MongoClient.connect(url, function(err, db) {
           const event = cal.createEvent({
               start: eventToAdd.start,
               end: eventToAdd.end,
-              summary: eventToAdd.className,
-              timezone: 'America/Boston'
+              summary: eventToAdd.className
           });
           return cal
       }
@@ -165,6 +164,7 @@ MongoClient.connect(url, function(err, db) {
 
           // For each event, add it to a calendar
           eventList.forEach(function(event) {
+              console.log("description: "+event.description+", start: "+event.date+", end: "+event.endDate)
               const anEvent = cal.createEvent({
                                         start: event.date,
                                         end: event.endDate,
@@ -279,6 +279,7 @@ MongoClient.connect(url, function(err, db) {
            // Add these elements to the events object
            eventToAdd.date = date
            eventToAdd.endDate = moment(endDate).add(1, 'days').format('YYYY-MM-DD');
+
            eventToAdd.description = description
            eventDescription.push(description)
 
@@ -524,7 +525,7 @@ MongoClient.connect(url, function(err, db) {
         var year = "2019"
     }
     else{
-          var year = "2018"
+        var year = "2018"
     }
 
     var endDate = "XX"
@@ -564,7 +565,7 @@ MongoClient.connect(url, function(err, db) {
 
     var endDate = []
     // Populate the endDate variable using database info
-    dbo.collection("events").find({"description" :/Last day/}).toArray(function(err, result) {
+    dbo.collection("events").find({"description" :/Last day of instruction/}).toArray(function(err, result) {
       if (err) throw err;
       endDate.push(result[0].date)
     });
