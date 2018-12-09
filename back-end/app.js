@@ -7,11 +7,6 @@ var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
 
-// Mongoose setup - We will use the events database
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/events');
-
-
 var app = express();
 
 app.use(function (req, res, next) {
