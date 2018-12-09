@@ -19,9 +19,10 @@
     "mongodb": "^3.1.10",
     "morgan": "~1.9.0",
     "nodemailer": "^4.4.2",
-    "serve-favicon": "~2.4.5"
+    "serve-favicon": "~2.4.5",
+    "mongoose": "^5.3.15"
   },
   "devDependencies": {
-    "mongoose": "^5.3.11"
+    "mongoose": "^5.3.15"
   }
 }
