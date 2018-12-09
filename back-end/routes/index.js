@@ -169,8 +169,7 @@ MongoClient.connect(url, function(err, db) {
                                         start: event.date,
                                         end: event.endDate,
                                         allDay: true,
-                                        summary: event.description,
-                                        timezone: 'America/Boston'
+                                        summary: event.description
                                     });
           })
 
