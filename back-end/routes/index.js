@@ -97,6 +97,7 @@ MongoClient.connect(url, function(err, db) {
 
     var olinMondays = semesterInfo[2].map(x => formatEventsCalendarTime(x)[0]);
     var endDate = formatEventsCalendarTime(semesterInfo[1][0])[0];
+    console.log(endDate)
 
 
   // ******************** START ICAL SETUP *******************/
@@ -267,18 +268,18 @@ MongoClient.connect(url, function(err, db) {
 
            // Extract the date and description from the database
            date = formatEventsCalendarTime(result[i].date)[0]
-           endDate = formatEventsCalendarTime(result[i].date)[1]
+           endDateEvent = formatEventsCalendarTime(result[i].date)[1]
 
            // If this is not a multi-day event, then set end date same as start date
-           if(endDate.includes("XX")){
-             endDate = date
+           if(endDateEvent.includes("XX")){
+             endDateEvent = date
            }
 
            description = result[i].description
 
            // Add these elements to the events object
            eventToAdd.date = date
-           eventToAdd.endDate = moment(endDate).add(1, 'days').format('YYYY-MM-DD');
+           eventToAdd.endDate = moment(endDateEvent).add(1, 'days').format('YYYY-MM-DD');
 
            eventToAdd.description = description
            eventDescription.push(description)
@@ -349,14 +350,14 @@ MongoClient.connect(url, function(err, db) {
                             endTime = eventToAdd.endTime
                             repeatDays = []
                             startDate = olinMonday.replace(/-/g, '')
-                            endDate = olinMonday.replace(/-/g, '')
+                            endDateCourse = olinMonday.replace(/-/g, '')
 
 
                             mondayEventToAdd.weekday = repeatDays;
                             mondayEventToAdd.days = repeatDays;
                             mondayEventToAdd.startTime = startTime;
                             mondayEventToAdd.start = startDate+startTime;
-                            mondayEventToAdd.end = endDate+endTime;
+                            mondayEventToAdd.end = endDateCourse+endTime;
                             mondayEventToAdd.endTime = endTime;
 
                             // If the user entered in a preferred title, use that title
@@ -530,11 +531,11 @@ MongoClient.connect(url, function(err, db) {
         var year = "2018"
     }
 
-    var endDate = "XX"
+    var endDateEvent = "XX"
 
     // If there is a hyphen, this is a multi-day event
     if(hyphen != -1){
-        endDate = date.slice(hyphen+1,secondOBrackets+hyphen)
+        endDateEvent = date.slice(hyphen+1,secondOBrackets+hyphen)
     }
 
     var startDate = date.slice(firstSpace+1, firstOBrackets)
@@ -549,7 +550,7 @@ MongoClient.connect(url, function(err, db) {
 
     // Combine the month/day/year into a single string
     var startDateFormat = year+"-"+month+"-"+startDate
-    var endDateFormat = year+"-"+month+"-"+endDate
+    var endDateFormat = year+"-"+month+"-"+endDateEvent
 
     return [startDateFormat, endDateFormat, eventDescription]
   }
@@ -565,11 +566,11 @@ MongoClient.connect(url, function(err, db) {
       startDate.push(result[0].date)
     });
 
-    var endDate = []
+    var endDateInfo = []
     // Populate the endDate variable using database info
     dbo.collection("events").find({"description" :/Last day of instruction/}).toArray(function(err, result) {
       if (err) throw err;
-      endDate.push(result[0].date)
+      endDateInfo.push(result[0].date)
     });
 
     // Extract all Olin Mondays from the database
@@ -594,7 +595,7 @@ MongoClient.connect(url, function(err, db) {
       })
     });
 
-    var semesterInfo = [startDate, endDate, olinMondays, noClasses]
+    var semesterInfo = [startDate, endDateInfo, olinMondays, noClasses]
     return semesterInfo
   }
 
@@ -641,7 +642,7 @@ MongoClient.connect(url, function(err, db) {
       ]*/
   function getExludedDatesANDfirstDates(semesterInfo) {
       const startDate = formatEventsCalendarTime(semesterInfo[0][0])[0];
-      const endDate = formatEventsCalendarTime(semesterInfo[1][0])[0];
+      const endDateInfo = formatEventsCalendarTime(semesterInfo[1][0])[0];
       const olinMondays = semesterInfo[2].map(x => formatEventsCalendarTime(x)[0]);
 
       // noClasssesNotFlat returns a list of lists so we need to flatten it
@@ -667,7 +668,7 @@ MongoClient.connect(url, function(err, db) {
         var count = 0;
 
         // While we haven't reached the end date, keep adding days
-        while (current.day(day).isSameOrBefore(endDate)) {
+        while (current.day(day).isSameOrBefore(endDateInfo)) {
           var formattedDate = current.format('YYYY-MM-DD');
           var isUnusualDate = olinMondays.includes(formattedDate) || noClasses.includes(formattedDate)
 
