@@ -139,13 +139,13 @@ MongoClient.connect(url, function(err, db) {
             start: eventToAdd.start,
             end: eventToAdd.end,
             summary: eventToAdd.className,
+            timezone: 'America/Boston',
             repeating: {
               freq: 'WEEKLY',
               until: endDate,
               exclude: excludedDates,
               byDay: eventToAdd.days,
             },
-            timezone: 'America/Boston',
         });
         return cal
     }
@@ -256,6 +256,24 @@ MongoClient.connect(url, function(err, db) {
     })
   }
 
+  function addTag(calString)
+  {
+    if (calString.search("EXDATE") != -1){
+      while (calString.search("0Z") != -1)
+      {
+        calString = calString.replace('0Z','0');
+      }
+
+      var tagPos = calString.search("EXDATE") + 6
+       console.log(tagPos)
+      console.log(calString.slice(0, tagPos) + ";TZID=America/Boston" + calString.slice(tagPos))
+      return calString.slice(0, tagPos) + ";TZID=America/Boston" + calString.slice(tagPos);
+    }
+    else{
+      return calString;
+    }
+  }
+
 
   function extractEvents(convert,res,req){
        var iCalEvents = []
@@ -343,7 +361,7 @@ MongoClient.connect(url, function(err, db) {
 
                       eventDescription.push(eventToAdd.className)
 
-                      iCalEvents.push(icalGen(eventToAdd).toString())
+                      iCalEvents.push(addTag(icalGen(eventToAdd).toString()))
 
                       // If it's an  Monday, we need to add in the Olin Mondays
                       if(moment(startDate).day() == 1){
