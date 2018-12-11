@@ -6,7 +6,8 @@ const creds = require('../config/config');
 
 // Setting the timezone to default to UTC, then convert to EST later on
 const moment = require('moment-timezone');
-moment.tz.setDefault("Europe/London");
+//moment.tz.setDefault("Europe/London");
+moment.tz.setDefault("UTC");
 
 
 //********** START ADDING OLIN CALENDAR DATA TO DATABASE **********
@@ -82,6 +83,8 @@ MongoClient.connect(url, function(err, db) {
     // Get the object storing the list of the days we will need to exclude from the iCals and the start dates
     var excludedDaysANDfirstDates = getExludedDatesANDfirstDates(semesterInfo);
 
+    console.log(excludedDaysANDfirstDates)
+
     var mondayExclusions = excludedDaysANDfirstDates[0].allDates;
     var tuesdayExclusions = excludedDaysANDfirstDates[1].allDates;
     var wednesdayExclusions = excludedDaysANDfirstDates[2].allDates;
@@ -131,17 +134,18 @@ MongoClient.connect(url, function(err, db) {
           }
         }
 
+        console.log(excludedDates)
         const event = cal.createEvent({
             start: eventToAdd.start,
             end: eventToAdd.end,
             summary: eventToAdd.className,
-            timezone: 'America/Boston',
             repeating: {
               freq: 'WEEKLY',
               until: endDate,
               exclude: excludedDates,
               byDay: eventToAdd.days,
-              }
+            },
+            timezone: 'America/Boston',
         });
         return cal
     }
