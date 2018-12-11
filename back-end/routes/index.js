@@ -329,6 +329,7 @@ MongoClient.connect(url, function(err, db) {
                       if (extraDate != 0)
                       {
                       time = formatTime(extraDate)
+                      console.log(time)
                       date = extraDate
                       }
                       else{
@@ -493,7 +494,7 @@ MongoClient.connect(url, function(err, db) {
          endTime = time.slice(hyphenPos+1,time.length);
          endHour =  endTime.slice(0,endTime.search(/\:/));
          endMinutes = endTime.slice(endTime.search(/\:/)+1,endTime.length-2);
-
+         
          if (endTime.search("pm") != -1 && endHour<12){
                 if (endHour > startHour)
                 {
@@ -512,8 +513,8 @@ MongoClient.connect(url, function(err, db) {
         }
         startTime = "T"+startHour+startMinutes+"00"
         endTime = "T"+endHour+endMinutes+"00"
-
-
+        console.log(endTime)
+        endTime = endTime.replace(/(\r\n\t|\n|\r\t)/gm,"");
         return[startTime,endTime,extraDate]
   }
 }, 1000);
