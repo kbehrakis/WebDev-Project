@@ -18,11 +18,12 @@ const csvFilePath='./csv/2018-2019.csv'
 const csv = require('csvtojson')
 
 const http = require('http');
+const https = require('https');
 
 // ping our app every 5 minutes so it doesn't sleep
 setInterval(function() {
-    http.get("https://olin-ical-generator.herokuapp.com/");
-    http.get("https://olin-ical-generator-backend.herokuapp.com/");
+    https.get("https://olin-ical-generator.herokuapp.com/");
+    https.get("https://olin-ical-generator-backend.herokuapp.com/");
     console.log("pinging now")
 }, 300000); // every 5 minutes (300000)
 
