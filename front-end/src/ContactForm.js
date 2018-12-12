@@ -3,6 +3,16 @@ import axios from 'axios';
 import {FormGroup} from 'reactstrap';
 import $ from 'jquery';
 
+const https = require('https');
+
+// ping our app every 5 minutes so it doesn't sleep
+setInterval(function() {
+    https.get("https://olin-ical-generator.herokuapp.com/");
+    https.get("https://olin-ical-generator-backend.herokuapp.com/");
+    console.log("pinging now")
+}, 300000); // every 5 minutes (300000)
+
+
 class ContactForm extends Component{
     constructor(props, context) {
       super(props, context);
