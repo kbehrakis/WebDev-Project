@@ -110,6 +110,12 @@ MongoClient.connect(url, function(err, db) {
   const ical = require('ical-generator');
   const http = require('http');
 
+  // ping our app every 5 minutes so it doesn't sleep
+  setInterval(function() {
+      http.get("http://olin-ical-generator.herokuapp.com");
+      http.get("http://olin-ical-generator-backend.herokuapp.com");
+  }, 300000); // every 5 minutes (300000)
+
   function icalGen(eventToAdd){
         const cal = ical();
         // Get the days of the week so that we know which weekdays we need to exlude
