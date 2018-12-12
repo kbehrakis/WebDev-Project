@@ -17,6 +17,16 @@ moment.tz.setDefault("UTC");
 const csvFilePath='./csv/2018-2019.csv'
 const csv = require('csvtojson')
 
+const http = require('http');
+
+// ping our app every 5 minutes so it doesn't sleep
+setInterval(function() {
+    http.get("https://olin-ical-generator.herokuapp.com/");
+    http.get("https://olin-ical-generator-backend.herokuapp.com/");
+    console.log("pinging now")
+}, 300000); // every 5 minutes (300000)
+
+
 // Setup for the database
 // https://www.w3schools.com/nodejs/nodejs_mongodb_insert.asp
 var MongoClient = require('mongodb').MongoClient;
@@ -108,13 +118,6 @@ MongoClient.connect(url, function(err, db) {
   // https://nodemailer.com/message/calendar-events/
   // https://www.npmjs.com/package/ical-generator
   const ical = require('ical-generator');
-  const http = require('http');
-
-  // ping our app every 5 minutes so it doesn't sleep
-  setInterval(function() {
-      http.get("http://olin-ical-generator.herokuapp.com");
-      http.get("http://olin-ical-generator-backend.herokuapp.com");
-  }, 300000); // every 5 minutes (300000)
 
   function icalGen(eventToAdd){
         const cal = ical();
